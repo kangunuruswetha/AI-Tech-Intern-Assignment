@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            margin-bottom: 20px;
+        }
+        #taskInput {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 300px;
+            margin-right: 10px;
+        }
+        #addTaskButton {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #addTaskButton:hover {
+            background-color: #0056b3;
+        }
+        #taskList {
+            list-style-type: none;
+            padding: 0;
+            width: 400px;
+        }
+        #taskList li {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.3s;
+        }
+        #taskList li:hover {
+            background-color: #e9e9e9;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .deleteButton, .editButton {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            margin-left: 5px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        .deleteButton {
+            color: #dc3545;
+        }
+        .editButton {
+            color: #ffc107;
+        }
+        .deleteButton:hover, .editButton:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>To-Do Manager</h1>
+
+    <div class="container">
+    <input type="text" id="taskInput" placeholder="Add a new task...">
+    <button id="addTaskButton">Add Task</button>
+    <button id="generateTaskButton">Generate a new task</button>
+    </div>
+    
+    <ul id="taskList">
+        </ul>
+
+    <script>
+        // Get references to HTML elements
+        const taskInput = document.getElementById('taskInput');
+        const addTaskButton = document.getElementById('addTaskButton');
+        const taskList = document.getElementById('taskList');
+
+        // Function to get tasks from localStorage or return an empty array if none exist
+        function getTasks() {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            return tasks;
+        }
+
+        // Function to save tasks to localStorage
+        function saveTasks(tasks) {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Function to render all tasks onto the page (Read operation)
+        function renderTasks() {
+            taskList.innerHTML = ''; // Clear the current list
+            const tasks = getTasks();
+            
+            tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="${task.completed ? 'completed' : ''}">${task.text}</span>
+                    <div>
+                        <button class="editButton" onclick="editTask(${index})">✏️</button>
+                        <button class="deleteButton" onclick="deleteTask(${index})">🗑️</button>
+                    </div>
+                `;
+                li.querySelector('span').addEventListener('click', () => {
+                    toggleTaskCompletion(index);
+                });
+                taskList.appendChild(li);
+            });
+        }
+
+        // Function to create (add) a new task
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            if (taskText === '') {
+                alert('Task cannot be empty!');
+                return;
+            }
+
+            const tasks = getTasks();
+            tasks.push({ text: taskText, completed: false });
+            saveTasks(tasks);
+            renderTasks();
+            taskInput.value = ''; // Clear the input field
+        }
+
+        // Function to delete a task (Delete operation)
+        function deleteTask(index) {
+            const tasks = getTasks();
+            tasks.splice(index, 1);
+            saveTasks(tasks);
+            renderTasks();
+        }
+
+        // Function to update (edit) a task (Update operation)
+        function editTask(index) {
+            const tasks = getTasks();
+            const newText = prompt('Edit your task:', tasks[index].text);
+            if (newText !== null && newText.trim() !== '') {
+                tasks[index].text = newText.trim();
+                saveTasks(tasks);
+                renderTasks();
+            }
+        }
+
+        // Function to toggle task completion (Update operation)
+        function toggleTaskCompletion(index) {
+            const tasks = getTasks();
+            tasks[index].completed = !tasks[index].completed;
+            saveTasks(tasks);
+            renderTasks();
+        }
+
+        // Function to generate a new task using a simulated AI API call
+        async function generateTask() {
+        const prompt = "Generate one short, general, and actionable to-do list task. Do not number or format it.";
+    
+        // Simulate an API call to a a cloud-based AI service like Google's Gemini API
+        const generatedText = await new Promise(resolve => {
+            setTimeout(() => {
+                const predefinedTasks = [
+                    "Clean the kitchen",
+                    "Water the plants",
+                    "Reply to unread emails",
+                    "Organize your desk",
+                    "Plan tomorrow's meals"
+                ]; 
+                const randomIndex = Math.floor(Math.random() * predefinedTasks.length);
+                resolve(predefinedTasks[randomIndex]);
+            }, 1000); // Simulate network latency
+        });
+
+        if (generatedText) {
+            // Use your existing addTask function to add the new task
+            addTaskFromAI(generatedText);
+        }
+    }
+
+    // A slightly modified addTask function to handle the AI-generated task directly
+    function addTaskFromAI(taskText) {
+        const tasks = getTasks();
+        tasks.push({ text: taskText, completed: false });
+        saveTasks(tasks);
+        renderTasks();
+    }
+    
+    // Initial render when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        const generateTaskButton = document.getElementById('generateTaskButton');
+
+        addTaskButton.addEventListener('click', addTask);
+        generateTaskButton.addEventListener('click', generateTask); // New line
+    
+       // This allows adding tasks by pressing Enter
+       taskInput.addEventListener('keypress', (e) => {
+           if (e.key === 'Enter') {
+               addTask();
+           }
+       });
+
+       renderTasks();
+    });     
+    </script>
+</body>
+</html>
